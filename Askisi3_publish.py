@@ -1,57 +1,28 @@
-# python 3.6
+import json
+import paho.mqtt.client as mqtt
 
-import random
-import time
+# MQTT broker settings
+mqtt_broker = "broker.emqx.io"
+mqtt_port = 1883
+mqtt_topic = "python/mqtt"
 
-from paho.mqtt import client as mqtt_client
+# Initialize MQTT client
+mqtt_client = mqtt.Client()
 
-# Ορίστε τις μεταβλητές broker, port, topic, client_id.
-broker = 'broker.emqx.io'
-port = 1883
-topic = "python/mqtt"
-# Generate a Client ID with the publish prefix.
-client_id = f'publish-{random.randint(0, 1000)}'
-# username = 'emqx'
-# password = 'public'
+# Connect to the MQTT broker
+mqtt_client.connect(mqtt_broker, mqtt_port)
 
-# Συνδεθείτε στον MQTT broker.
-def connect_mqtt():
-    def on_connect(client, userdata, flags, rc):
-        if rc == 0:
-            print("Connected to MQTT Broker!")
-        else:
-            print("Failed to connect, return code %d\n", rc)
+# HTTP POST data
+post_data = {
+    "name": "John",
+    "age": 25
+}
 
-    client = mqtt_client.Client(client_id)
-    # client.username_pw_set(username, password)
-    client.on_connect = on_connect
-    client.connect(broker, port)
-    return client
+# Convert HTTP POST request to a string
+http_post_request = json.dumps(post_data)  # Convert to JSON string
 
-# Εκδόστε ένα μήνυμα στο topic.
-def publish(client):
-    msg_count = 1
-    for i in range(5):
-        time.sleep(1)
-        msg = f"messages: {msg_count}"
-        result = client.publish(topic, msg)
-        # result: [0, 1]
-        status = result[0]
-        if status == 0:
-            print(f"Send `{msg}` to topic `{topic}`")
-        else:
-            print(f"Failed to send message to topic {topic}")
-        msg_count += 1
-        if msg_count > 5:
-            break
+# Publish the MQTT message with the HTTP POST request
+mqtt_client.publish(mqtt_topic, http_post_request)
 
-
-def run():
-    client = connect_mqtt()
-    client.loop_start()
-    publish(client)
-    client.loop_stop()
-
-
-if __name__ == '__main__':
-    run()
+# Disconnect from the MQTT broker
+mqtt_client.disconnect()
